@@ -14,6 +14,7 @@
 
 namespace httpfiledownload {
 
+
 struct PacketData {
     char*  m_data; //download data
 	size_t m_begin; //download range begin
@@ -33,7 +34,7 @@ public:
     string constructGetPacket(const AnalysisURL& an, const PacketConfig& conf);
     string constructHeadPacket(const AnalysisURL& an);
 
-    void analysisPacket(char* packet, PacketData& pd); 
+    void analysisPacket(char* packet, PacketData& pd, size_t headEnd); 
 };
 
 } // namespace

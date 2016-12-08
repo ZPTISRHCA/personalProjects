@@ -20,7 +20,7 @@ namespace httpfiledownload {
 string HttpPacket::constructHeadPacket(const AnalysisURL& an) {
 	PacketConfig conf;
 	conf.m_begin = 0;
-	conf.m_end = 371;
+	conf.m_end = 501;
 	return constructGetPacket(an, conf);
 }
 
@@ -34,10 +34,11 @@ string HttpPacket::constructGetPacket(const AnalysisURL& an, const PacketConfig&
     return req;
 }
 
-void HttpPacket::analysisPacket(char* packet, PacketData& pd) { 
-	char end = packet[370];
-	packet[370] = '\0';
+void HttpPacket::analysisPacket(char* packet, PacketData& pd, size_t headEnd) { 
+	char end = packet[headEnd];
+	packet[headEnd] = '\0';
 	string pt(packet);
+	LogDebug("\n\nHead:\n%s", pt.c_str());
 	size_t pos = pt.find("Content-Range: bytes");
 
 	if (pos != string::npos ) {
@@ -69,7 +70,7 @@ void HttpPacket::analysisPacket(char* packet, PacketData& pd) {
 		pd.m_contentLength = atoi(pt.substr(pos+16).c_str());
 		LogDebug("content-length: %d\n", pd.m_contentLength);
 	}
-	packet[370] = end;
+	packet[headEnd] = end;
 
 	pd.m_data = strstr(packet, "\r\n\r\n");
 	if (pd.m_data == NULL) {
