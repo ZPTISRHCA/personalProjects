@@ -20,6 +20,7 @@ AnalysisURL::AnalysisURL(char* _url) {
     }
 
     string url = string(_url); 
+	LogDebug("download from: %s\n", _url);
 
     size_t hostHead = 0, hostEnd = url.length();   
 
@@ -35,9 +36,6 @@ AnalysisURL::AnalysisURL(char* _url) {
 		hostEnd = url.length();
     } else {
 		m_path = url.substr(hostEnd);
-		size_t pathEnd = m_path.find_first_of(';', 0);
-		if (pathEnd != string::npos)
-			m_path = m_path.substr(0, pathEnd);
     }
 	LogDebug("The path is: %s\n", m_path.c_str());
 
@@ -67,22 +65,6 @@ AnalysisURL::AnalysisURL(char* _url) {
     }
     m_IP =  *(unsigned long*)m_pURL->h_addr_list[0];
 	LogDebug("The analysis IP is : %u\n", m_IP);
-}
-
-const string& AnalysisURL::getHostName() const {
-	return m_hostName;
-}
-
-unsigned long AnalysisURL::getIP() const {
-	return m_IP;
-}
-
-unsigned int AnalysisURL::getPort() const {
-	return m_port;
-}
-
-const string& AnalysisURL::getPath() const {
-	return m_path;
 }
 
 } // namespace
