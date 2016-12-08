@@ -16,8 +16,7 @@ using std::cin;
 
 namespace httpfiledownload {
 
-AnalysisURL::AnalysisURL(char* _url) {
-    if (_url == NULL) {
+AnalysisURL::AnalysisURL(char* _url) { if (_url == NULL) {
 		LogError("The URL can't be NULL\n");
 		exit(EXIT_FAILURE);
     }
@@ -55,9 +54,10 @@ AnalysisURL::AnalysisURL(char* _url) {
 	} else {
 		LogDebug("find filename in path  ");
 		fileNameEnd = m_path.find('&', fileName);
-		if (fileNameEnd != string::npos) {
-			fileName += 9;
+		if (fileNameEnd == string::npos) {
+			fileNameEnd = m_path.length();
 		}
+		fileName += 9;
 	}
 	LogDebug("filenameBegin: %d   fileNameEnd: %d  ", fileName, fileNameEnd);
 	if (fileName != string::npos && fileNameEnd != string::npos) {
