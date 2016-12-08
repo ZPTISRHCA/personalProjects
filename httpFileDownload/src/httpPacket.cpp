@@ -38,7 +38,6 @@ void HttpPacket::analysisPacket(char* packet, PacketData& pd, size_t headEnd) {
 	char end = packet[headEnd];
 	packet[headEnd] = '\0';
 	string pt(packet);
-	LogDebug("\n\nHead:\n%s", pt.c_str());
 	size_t pos = pt.find("Content-Range: bytes");
 
 	if (pos != string::npos ) {
