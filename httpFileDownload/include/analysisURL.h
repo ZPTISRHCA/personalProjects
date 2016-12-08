@@ -24,10 +24,18 @@ private:
 
 public:
     AnalysisURL(char*);
-    inline const string& getHostName()const; 
-    inline unsigned long getIP() const;
-    inline unsigned int getPort() const;
-    inline const string& getPath() const;
+    inline const string& getHostName()const  {
+		return m_hostName;
+	}
+    inline unsigned long getIP() const {
+		return m_IP;
+	}
+    inline unsigned int getPort() const {
+		return m_port;
+	}
+    inline const string& getPath() const {
+		return m_path;
+	}
 };
 
 } // namespace httpfiledownload
