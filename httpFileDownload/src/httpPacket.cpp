@@ -38,7 +38,16 @@ void HttpPacket::analysisPacket(char* packet, PacketData& pd, size_t headEnd) {
 	char end = packet[headEnd];
 	packet[headEnd] = '\0';
 	string pt(packet);
-	size_t pos = pt.find("Content-Range: bytes");
+	size_t pos = pt.find("Location:"); //是否已经重定向
+	if (pos != string::npos) {
+		size_t newURLEnd = pt.find("\r\n", pos);
+		pos += 10;
+		string newURL = pt.substr(pos, newURLEnd-pos);
+		LogError("\nThe url has changed to <%s> please try again\n", newURL.c_str());
+		exit(1);
+	}
+
+	pos = pt.find("Content-Range: bytes");
 
 	if (pos != string::npos ) {
 		LogDebug("find content-range   ");
@@ -63,11 +72,13 @@ void HttpPacket::analysisPacket(char* packet, PacketData& pd, size_t headEnd) {
 		pos = pt.find("Content-Length:");
 		if (pos == string::npos) {
 			LogError("can't find the content-length   ");
+			LogError("can't reach\n");
 			exit(0);
-		} 
-		LogDebug("find content-length  ");
-		pd.m_contentLength = atoi(pt.substr(pos+16).c_str());
-		LogDebug("content-length: %d\n", pd.m_contentLength);
+		} else {
+			LogDebug("find content-length  ");
+			pd.m_contentLength = atoi(pt.substr(pos+16).c_str());
+			LogDebug("content-length: %d\n", pd.m_contentLength);
+		}
 	}
 	packet[headEnd] = end;
 
