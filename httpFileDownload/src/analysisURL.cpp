@@ -9,7 +9,10 @@
 #include "../include/analysisURL.h"
 #include "../include/logger.h"
 #include <stdlib.h>
+#include <iostream>
 #include <netdb.h>
+
+using std::cin;
 
 namespace httpfiledownload {
 
@@ -38,6 +41,33 @@ AnalysisURL::AnalysisURL(char* _url) {
 		m_path = url.substr(hostEnd);
     }
 	LogDebug("The path is: %s\n", m_path.c_str());
+
+	size_t fileName = m_path.find("filename="), fileNameEnd = 0;;
+	if (fileName == string::npos) {
+		LogDebug("not find filename in path   ");
+		fileName = m_path.find_last_of('/');
+		if (fileName != string::npos && fileName!=0) {
+			fileNameEnd = m_path.find('?');
+			if (fileNameEnd != string::npos) {
+				fileName += 1;
+			}
+		} 
+	} else {
+		LogDebug("find filename in path  ");
+		fileNameEnd = m_path.find('&', fileName);
+		if (fileNameEnd != string::npos) {
+			fileName += 9;
+		}
+	}
+	LogDebug("filenameBegin: %d   fileNameEnd: %d  ", fileName, fileNameEnd);
+	if (fileName != string::npos && fileNameEnd != string::npos) {
+		m_fileName = m_path.substr(fileName, fileNameEnd-fileName);
+	} else {
+		LogWarn("can't find the filename, please input one: ");
+		cin >> m_fileName;
+	}
+
+	LogDebug("filename: %s\n", m_fileName.c_str());
 
 	url = url.substr(hostHead, hostEnd-hostHead);
 	hostHead = 0, hostEnd = url.length();
