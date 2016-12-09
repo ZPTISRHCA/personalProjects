@@ -20,7 +20,7 @@ namespace httpfiledownload {
 string HttpPacket::constructHeadPacket(const AnalysisURL& an) {
 	PacketConfig conf;
 	conf.m_begin = 0;
-	conf.m_end = 501;
+	conf.m_end = 0;
 	return constructGetPacket(an, conf);
 }
 
@@ -34,7 +34,11 @@ string HttpPacket::constructGetPacket(const AnalysisURL& an, const PacketConfig&
     return req;
 }
 
-void HttpPacket::analysisPacket(char* packet, PacketData& pd, size_t headEnd) { 
+size_t HttpPacket::analysisPacket(char* packet, PacketData& pd) { 
+	size_t headEnd = strstr(packet, "\r\n\r\n")-packet; //find packet head end
+	if (headEnd > strlen(packet))
+		headEnd = strlen(packet);
+
 	char end = packet[headEnd];
 	packet[headEnd] = '\0';
 	string pt(packet);
@@ -79,16 +83,11 @@ void HttpPacket::analysisPacket(char* packet, PacketData& pd, size_t headEnd) {
 			pd.m_contentLength = atoi(pt.substr(pos+16).c_str());
 			LogDebug("content-length: %d\n", pd.m_contentLength);
 		}
-		packet[headEnd] = end;
-
-		pd.m_data = strstr(packet, "\r\n\r\n");
-		if (pd.m_data == NULL) {
-			LogError("can't find data in the packet\n'");
-			return ;
-		}
-		LogDebug("find data\n");
 	}
-
+	packet[headEnd] = end;
+	pd.m_data = packet+headEnd+4;
+	LogDebug("find data\n");
+	return headEnd+4;
 }
 
 } //namespace

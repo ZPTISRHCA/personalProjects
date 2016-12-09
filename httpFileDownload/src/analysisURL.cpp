@@ -46,9 +46,10 @@ AnalysisURL::AnalysisURL(char* _url) { if (_url == NULL) {
 		LogDebug("not find filename in path   ");
 		fileName = m_path.find_last_of('/');
 		if (fileName != string::npos && fileName!=0) {
+			fileName += 1;
 			fileNameEnd = m_path.find('?');
-			if (fileNameEnd != string::npos) {
-				fileName += 1;
+			if (fileNameEnd == string::npos) {
+				fileNameEnd = m_path.length();
 			}
 		} 
 	} else {

@@ -13,6 +13,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "httpPacket.h"
+#include <stdio.h>
+
 namespace httpfiledownload {
 
 class IOSocket {
@@ -28,13 +31,29 @@ public:
 			return 0;
 		return 1;
 }
-    inline int recvMsg(char* msg, size_t size) {
-		if (recv(m_fd, msg, size, 0) == -1)
+    inline size_t recvMsg(char* msg, size_t size) {
+		size_t len = recv(m_fd, msg, size, 0);
+		if (len <= 0)
 			return 0;
-		return 1;
+		return len;
 }
 
 };
+
+class IOFile {
+private:
+    FILE* m_fp;
+
+public:
+    IOFile(string fileName);
+    ~IOFile() { fclose(m_fp); }
+    void write(PacketData* data);
+	inline FILE* getFp() const {
+		return m_fp;
+	}
+};
+
+
 
 
 

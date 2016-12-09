@@ -34,7 +34,7 @@ public:
     string constructGetPacket(const AnalysisURL& an, const PacketConfig& conf);
     string constructHeadPacket(const AnalysisURL& an);
 
-    void analysisPacket(char* packet, PacketData& pd, size_t headEnd); 
+    size_t analysisPacket(char* packet, PacketData& pd); 
 };
 
 } // namespace

@@ -21,6 +21,7 @@ private:
     unsigned long   m_IP;
     unsigned int    m_port;
     string			m_path;
+	string			m_fileName;
 
 public:
     AnalysisURL(char*);
@@ -35,6 +36,9 @@ public:
 	}
     inline const string& getPath() const {
 		return m_path;
+	}
+	inline const string& getFileName() const {
+		return m_fileName;
 	}
 };
 
