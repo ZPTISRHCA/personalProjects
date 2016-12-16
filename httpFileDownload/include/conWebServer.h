@@ -3,7 +3,7 @@
 # Author		: zpt
 # mail			: zpt1596723345@live.com
 # Created Time	: 2016年12月07日 星期三 08时01分23秒
-# Descrition	: 
+# Descrition	: 连接服务器 
 ***********************************************************/
 #ifndef HTTPFILEDOWNLOAD_CONWEBSERVER_H
 #define HTTPFILEDOWNLOAD_CONWEBSERVER_H
@@ -16,11 +16,13 @@ namespace httpfiledownload {
 
 class ConWebServer {
 	struct sockaddr_in  m_conAddr;
-    int m_clientFd;
+    int					m_clientFd;
 
 public:
     ConWebServer(const AnalysisURL&);
-    inline int getClientFd() const { return m_clientFd; }
+    inline int getClientFd() const { 
+		return m_clientFd; 
+	}
 };
 
 }

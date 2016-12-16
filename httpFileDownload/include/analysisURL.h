@@ -3,7 +3,8 @@
 # Author		: zpt
 # mail			: zpt1596723345@live.com
 # Created Time	: 2016年12月01日 星期四 08时40分07秒
-# Descrition	: 该文件主要是完成URL的解析					 然后获得需要的参数，用于                   构造HTTP请求包 
+# Descrition	: 通过URL的解析 1.主机名  2. 端口号（如果有）  3.路径  4.文件名
+				  1，3 用于构造HTTP请求包，1，2 用于连接服务器，4 用于下载数据保存
 ***********************************************************/
 
 #ifndef HTTPFILEDOWNLOAD_ANALYSISURL_H
@@ -18,13 +19,13 @@ namespace httpfiledownload {
 class AnalysisURL {
 private:
     string			m_hostName;
-    unsigned long   m_IP;
+    unsigned long   m_IP; //通过主机名计算得到
     unsigned int    m_port;
     string			m_path;
 	string			m_fileName;
 
 public:
-    AnalysisURL(char*);
+    AnalysisURL(char*); //初始化为用户输入url
     inline const string& getHostName()const  {
 		return m_hostName;
 	}

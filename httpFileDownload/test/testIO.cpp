@@ -26,36 +26,43 @@ int main() {
 	char b[] = "http://p2.image.hiapk.com/uploads/allimg/150828/928-150RQQ642-56.jpg";
 	AnalysisURL an(b);
 	ConWebServer con(an);
-
 	int fd = con.getClientFd();
 	HttpPacket packetTool;
-	string packet = packetTool.constructHeadPacket(an);
+
+	
+	PacketConfig pg(0, 1);
+	string packet = packetTool.constructGetPacket(an, pg);
 	IOSocket io(fd);
 	io.sendMsg(packet.c_str(), packet.length());
 	char buffer[2048];
 	size_t totalSize = 0, curSize = 0;
 	memset(buffer, 0, 2048);
 	size_t length = io.recvMsg(buffer, 2048);
-	cout << "length: " << length << endl;
 	PacketData pd;
-	packetTool.analysisPacket(buffer, pd);
+	length -= packetTool.analysisPacket(buffer, pd);
 	totalSize = pd.m_contentLength;
+	cout << "totalSize;" << totalSize << endl;
 
-	PacketConfig pg;
 	pg.m_begin = 0;
-	pg.m_end = pd.m_contentLength;
+	//pg.m_end = pd.m_contentLength;
+	pg.m_end = 0;
 
 	packet = packetTool.constructGetPacket(an, pg);
+	cout << packet << endl;
 	io.sendMsg(packet.c_str(), packet.length());
 	memset(buffer, 0, 2048);
 	length = io.recvMsg(buffer, 2048);
 
+	cout << "length: " << length << endl;
 	length = length - packetTool.analysisPacket(buffer, pd);
-	IOFile iof(an.getFileName());	
-	pd.m_end = length;
+	cout << "length: " << length << endl;
+	IOFile* iof = new IOFile(an.getFileName());
 
-	iof.write(&pd);
-	
+	pd.m_end = length;
+	cout << "download success %d-%d" << pd.m_begin << "-" << pd.m_end << endl;
+
+	iof->write(&pd);
+	cout << "begin: " << pd.m_begin << "  end: " << pd.m_end << endl;
 	curSize += pd.m_end;
 	while (1) {
 		if (totalSize <= curSize)
@@ -67,7 +74,7 @@ int main() {
 		pd.m_end = curSize+length;
 
 		pd.m_data = buffer;
-		iof.write(&pd);
+		iof->write(&pd);
 		curSize += length;
 	}
 	if (totalSize != curSize)

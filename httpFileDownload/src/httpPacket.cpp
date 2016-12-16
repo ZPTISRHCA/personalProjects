@@ -17,23 +17,23 @@ using namespace std;
 
 namespace httpfiledownload {
 	
-string HttpPacket::constructHeadPacket(const AnalysisURL& an) {
-	PacketConfig conf;
-	conf.m_begin = 0;
-	conf.m_end = 0;
-	return constructGetPacket(an, conf);
-}
-
 string HttpPacket::constructGetPacket(const AnalysisURL& an, const PacketConfig& conf) {
-    char cBg[20], cEd[20];
-    sprintf(cBg, "%zu", conf.m_begin);
-    sprintf(cEd, "%zu", conf.m_end);
-    string bg = string(cBg), ed = string(cEd); 
-    string req = "GET " + an.getPath() + " HTTP/1.1\r\nHost: "\
-				  + an.getHostName() + "\r\nUser-Agent: my client\r\nAccept: */*\r\nRange: bytes=" + bg + "-" + ed + "\r\n\r\n";
+	string req;
+	if (conf.m_begin == 0 && conf.m_end == 0) { //用户指定单线程下载，包中不含有Range字段
+		req = "GET " + an.getPath() + " HTTP/1.1\r\nHost: " + an.getHostName() + "\r\nUser-Agent: my client\r\nAccept: */*\r\n\r\n";
+	} else {
+		char cBg[20], cEd[20];
+		sprintf(cBg, "%zu", conf.m_begin);
+		sprintf(cEd, "%zu", conf.m_end);
+		string bg = string(cBg), ed = string(cEd); 
+		req = "GET " + an.getPath() + " HTTP/1.1\r\nHost: " + an.getHostName() + "\r\nUser-Agent: my client\r\nAccept: */*\r\nRange: bytes=" + bg + "-" + ed + "\r\n\r\n";
+	}
     return req;
 }
-
+/*
+ * 如果支持多线程下载，对于首包，pd.begin=0, pd.end = 1， pd.contentLength=constentLength
+ * 其他不支持多线程,pd.begin = pd.end = 0。如果找到文件总大小会pd.contentLength=contentLength,否则pd.contentLength =0
+ */
 size_t HttpPacket::analysisPacket(char* packet, PacketData& pd) { 
 	size_t headEnd = strstr(packet, "\r\n\r\n")-packet; //find packet head end
 	if (headEnd > strlen(packet))
@@ -69,16 +69,14 @@ size_t HttpPacket::analysisPacket(char* packet, PacketData& pd) {
 		if (pos == string::npos) {
 			LogError("can't find the content-length   ");
 			pos = pt.find("Location:"); //是否已经重定向
-			if (pos != string::npos) {
+			if (pos != string::npos) { //重定向
 				size_t newURLEnd = pt.find("\r\n", pos);
 				pos += 10;
 				string newURL = pt.substr(pos, newURLEnd-pos);
 				LogError("\nThe url has changed to <%s> please try again\n", newURL.c_str());
 				exit(1);
 			}
-			LogError("can't reach\n");
-			exit(0);
-		} else {
+		} else {			
 			LogDebug("find content-length  ");
 			pd.m_contentLength = atoi(pt.substr(pos+16).c_str());
 			LogDebug("content-length: %d\n", pd.m_contentLength);

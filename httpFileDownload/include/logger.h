@@ -3,7 +3,7 @@
 # Author		: zpt
 # mail			: zpt1596723345@live.com
 # Created Time	: 2016年12月01日 星期四 04时46分48秒
-# Descrition	: 这个文件主要完成系统的日					 志
+# Descrition	: 系统的日志封装，真个系统日志分为四级，开发时默认为Debug，使用时默认Info
 ***********************************************************/
 #ifndef HTTPFILEDOWNLOAD_LOGGER_H
 #define HTTPFILEDOWNLOAD_LOGGER_H
@@ -12,11 +12,11 @@ namespace httpfiledownload {
 
 class Logger {
 public:
-	enum Level {
-		Error = 0,
-		Warn = 1,
-		Info = 2,
-		Debug = 3,
+	enum Level { //日志分级
+		Error = 0, //系统运行致命错误，必须停止运行
+		Warn  = 1, //系统运行错误，但不致命
+		Info  = 2, //主要用于系统运行中的显示和提示
+		Debug = 3, //主要用于开发输出调试信息
 	};
 
 public:
