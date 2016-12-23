@@ -46,16 +46,13 @@ DownloadTool::DownloadTool(AnalysisURL& an, size_t bufSize, int tNums):m_bufSize
 	} else { //用户希望多线程下载
 		//发送探测包，获取连接fd
 		dataLength = dealFirstPacket(io, an, buffer, m_bufSize, 0, 1, pd); 
-		if (pd.m_end == 1 && pd.m_begin == 0) { //支持多线程下载
-			totalSize = pd.m_contentLength;
-		} else if (pd.m_begin == 0 && pd.m_end == 0) { //服务器不支持多线程,单线程下载
+		totalSize = pd.m_contentLength;
+		if (pd.m_begin == 0 && pd.m_end == 0) { //服务器不支持多线程,单线程下载
 			threads = false;
-			if (pd.m_contentLength != 0) { //找到文件长度
-				totalSize = pd.m_contentLength;
-			}
 			//重新请求数据,如果totalSize为0，请求总文件，否则请求总长度
 			//dataLength = dealFirstPacket(fd, an, buffer, m_bufSize, 0, totalSize, pd); 
-		} else {
+		} else if (!(pd.m_begin == 0 && pd.m_end == 1)){
+			cout << pd.m_begin << "  " << pd.m_end << endl << endl;
 			LogError("system error\n");
 			exit(0);
 		}
@@ -78,7 +75,7 @@ DownloadTool::DownloadTool(AnalysisURL& an, size_t bufSize, int tNums):m_bufSize
 		LogError("downlaodMsg allocate failure\n");
 		exit(0);
 	}
-	m_showMsg = new ShowMsg(totalSize); //初始化显示信息
+	m_showMsg = new ShowMsg(m_downloadMsg); //初始化显示信息
 	if (m_showMsg == NULL) {
 		LogError("show download message init failure\n");
 		exit(0);
@@ -90,11 +87,10 @@ DownloadTool::DownloadTool(AnalysisURL& an, size_t bufSize, int tNums):m_bufSize
 		exit(0);
 	}
 	//初始化完毕
-	m_downloadMsg->startDownload();
-	pthread_t show;
-	//pthread_create(&show, NULL, ShowMsg::showMsg, (void*)m_showMsg);
+	m_downloadMsg->startDownload(); pthread_t show;
+//	pthread_create(&show, NULL, ShowMsg::showMsg, (void*)m_showMsg);
 	if (threads == true) {//多线程下载
-		createDownloadThread(); //创建多线程下载,参数无用
+		createDownloadThread(); //创建多线程下载
 	} else { //单线程下载
 		if (totalSize > 0) {
 			ThreadDownloadMsg td(*this, io, dataLength, 0, totalSize-1, pd.m_data, false); //读文件
@@ -104,7 +100,11 @@ DownloadTool::DownloadTool(AnalysisURL& an, size_t bufSize, int tNums):m_bufSize
 			downloadThread((void*)&td);//读取数据
 		}
 	}
-	m_showMsg->over();
+
+/*	if (pthread_join(show, NULL) != 0) {
+			LogWarn("wait show thread %d error\n", show);
+	}*/
+
 	//释放资源
 	delete io;
 	io = NULL;
@@ -128,7 +128,6 @@ DownloadTool::~DownloadTool() {
 
 
 size_t DownloadTool::dealFirstPacket(IOSocket*& io, AnalysisURL& an, char* buffer, size_t bufferSize, size_t begin, size_t end, PacketData& pd) {
-	LogDebug("thread %d is going to send first Packet\n", pthread_self());
 	memset(buffer, 0, bufferSize);
 	ConWebServer con(an);     //连接web服务器
 	int fd = con.getClientFd();
@@ -166,6 +165,7 @@ void* DownloadTool::downloadThread(void* arg) {
 	bool threads = msg->m_threads;
 	AnalysisURL& an = tool.getAnalysisURL();  //url分析器
 	size_t bufferSize = tool.getBufferSize(); //获取缓冲区长度
+	Sem& fileSem = tool.m_fileSem;
 	char *buffer = new char[bufferSize]; //初始化缓冲区
 	if (buffer == NULL) {
 		LogError("buffer allocate failure\n");
@@ -181,6 +181,7 @@ void* DownloadTool::downloadThread(void* arg) {
 	//如果是多线程下载，改变：fd, dataLength
 	if (threads == true) { //多线程下载,发送请求包,获取第一个包数据长度
 		dataLength = tool.dealFirstPacket(io, an, buffer, bufferSize, curSize, totalSize, pd);
+
 		LogDebug("thread %d request success <%d-%d>\n", pthread_self(), pd.m_begin, pd.m_end);
 	} else { //单线程下载
 		if (curSize == 0 && totalSize == 0) {
@@ -198,10 +199,13 @@ void* DownloadTool::downloadThread(void* arg) {
 		pd.m_begin = curSize; //指定写入数据范围
 		pd.m_end = curSize+dataLength;
 		pd.m_data = buffer; //配置写入包
+		//fileSem.semV();
 		iof->write(&pd); //写入文件
+		//fileSem.semP();
+		tool.update(pd.m_begin, pd.m_end);
+
 		curSize += dataLength; //更改当前下载位置
-		tool.update(pd.m_begin, pd.m_end);  //更新数据
-	//	LogDebug("thread %d update <%d-%d>\n", pthread_self(), pd.m_begin, pd.m_end);
+		//LogDebug("thread %d update <%d-%d>\n", pthread_self(), pd.m_begin, pd.m_end);
 		if (curSize >= totalSize && totalSize != 0) //任务没有执行完
 			break;
 		memset(buffer, 0, bufferSize); //清空缓冲区
@@ -227,17 +231,14 @@ void* DownloadTool::downloadThread(void* arg) {
 }
 
 void DownloadTool::update(size_t begin, size_t end) {
+	clock_t now = clock();
 	m_sem.semV(); //获得锁
 //更新数据DownloadMs
 	m_downloadMsg->setCurSize(end-begin);
-	
-//更新数据ShowMsg
-	m_showMsg->setCurSize(m_downloadMsg->getCurSize());
-	m_showMsg->setSpeed(m_downloadMsg->getSpeed());
+	//cout << "cursize:" << m_downloadMsg->getCurSize() << "clock: " << now << endl;
 	
 //更新数据TaskLog
 	//m_taskLog.
-
 	m_sem.semP(); //释放锁
 }
 
@@ -253,7 +254,6 @@ void DownloadTool::createDownloadThread() {
 		LogError("ThreadDownloadMsg* allocate fialure");
 		exit(EXIT_FAILURE);
 	}
-	cout << this->m_bufSize << endl;
 	for (int i=0; i<m_threadNums; i++) {
 		if (i == m_threadNums-1) {//如果是最后一个线程，下载剩余所有数据
 			end = m_downloadMsg->getTotalSize();
@@ -265,7 +265,7 @@ void DownloadTool::createDownloadThread() {
 			exit(EXIT_FAILURE);
 		}
 		pthread_create(m_pt+i, NULL, downloadThread, (void*)(td[i]));//创建线程
-		LogDebug("create thread %d ID: %d  :<%d-%d>\n", i+1, m_pt[i], begin, end);
+		LogDebug("create thread %d ID: %d  :<%d-%d>\n", i+1, m_pt[i], begin, end-1);
 		begin = end; //计算下一线程下载任务范围
 		end += perThreadDownload;
 	}

@@ -22,6 +22,8 @@ int Logger::s_fd = STDIN_FILENO;
 // 默认日志级别为Debug
 Logger::Level Logger::s_filter = Logger::Debug;
 
+//Logger::Level Logger::s_filter = Logger::Info;
+
 void Logger::setFilter(Level filter)
 {
     s_filter = filter;

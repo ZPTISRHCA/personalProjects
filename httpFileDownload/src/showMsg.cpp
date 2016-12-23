@@ -15,25 +15,23 @@ using namespace std;
 
 namespace httpfiledownload {
 
-
-double DownloadMsg::getSpeed() {
-	double differenceTime = (clock()-m_lastTime)/CLOCKS_PER_SEC; 
-	size_t differenceSize = m_curSize-m_lastSize;
-//	cout << clock() << "   " << m_lastTime << endl;
-//	cout << differenceTime << "  " << differenceSize << endl;
-	m_lastTime = clock();
-	m_lastSize = m_curSize;
-	return (differenceSize/differenceTime); 
-}
-
 void* ShowMsg::showMsg(void* arg) {
 	//添加暂停显示
 	ShowMsg* mg = (ShowMsg*)arg;
+	DownloadMsg* info = mg->m_info;
 
-	double fBar = 0;
+	size_t curSize = 0, lastSize = 0, totalSize = 0;
+	double speed = 0.0, fBar = 0.0;
 	int curNums = 0;
-	while (mg->m_run) {
-		fBar = (double)mg->m_curSize/mg->m_totalSize; 
+
+	totalSize = info->getTotalSize();
+	int waitTime = 1*1000;
+	while (mg->isRun()) {
+		curSize = info->getCurSize();
+		speed =	(double (curSize-lastSize)*1000000)/(waitTime*1024);
+		lastSize = curSize;
+
+		fBar = (double)curSize/totalSize; 
 		curNums = BARLENGTH*fBar;
 		for (int i = 0; i<BARLENGTH + 60; i++)
 			LogInfo("\b");
@@ -42,12 +40,17 @@ void* ShowMsg::showMsg(void* arg) {
 			LogInfo("=");
 		for (int i=0; i<BARLENGTH-curNums; i++)
 			LogInfo(" ");
-		if (mg->m_totalSize == 0) {
-			LogInfo("]%3d%    [%6d/  ~   ] : %.0f", (int)(fBar*100), mg->m_curSize, mg->m_speed);
+		if (totalSize == 0) {
+			LogInfo("]%3d%    [%6d/  ~   ] : %.0fKB/S", (int)(fBar*100), curSize, speed);
 		} else {
-			LogInfo("]%3d%    [%6d/%-6d] : %.0f", (int)(fBar*100), mg->m_curSize, mg->m_totalSize, mg->m_speed);
+			LogInfo("]%3d%    [%6d/%-6d] : %.0fKB/S", (int)(fBar*100), curSize, totalSize, speed);
 		}
-		usleep(20);
+		if (curSize >= totalSize)
+			break;
+		while (mg->isStop()) {
+			;
+		}
+		usleep(waitTime); 
 	}
 	LogInfo("\n");
 	return (void*)0;

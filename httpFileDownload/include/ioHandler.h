@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include "sem.h"
 
 namespace httpfiledownload {
 
@@ -74,6 +75,7 @@ public:
 class IOFile {
 private:
     FILE* m_fp; //文件描述符
+	Sem	  m_sem;
 
 public:
     IOFile(string fileName); //初始化为：文件名,如果文件存在就清空，否则创建
@@ -82,9 +84,6 @@ public:
 	 * 向文件中写入数据（封装在data中，包含：数据，开始位置，结束位置）
 	 */
     void write(PacketData* data);
-	inline FILE* getFp() const {
-		return m_fp;
-	}
 };
 
 } // namespace httpfiledown

@@ -29,9 +29,14 @@ void IOFile::write(PacketData* data) {
 		exit(0);
 	}
 	size_t size = data->m_end - data->m_begin;
+	m_sem.semV();
+	LogDebug("semV %d\n", data->m_begin);
 	fseek(m_fp, data->m_begin, SEEK_SET);
 	LogDebug("write file < %-5d-%5d >  total: %d\n", data->m_begin, data->m_end, size);
 	size_t len = fwrite(data->m_data, size, 1, m_fp);
+	LogDebug("semP %d\n", data->m_begin);
+	sleep(1);
+	m_sem.semP();
 	if (len == -1) {
 		LogDebug("file write error\n");
 		LogError("error\n");
@@ -39,4 +44,4 @@ void IOFile::write(PacketData* data) {
 	}
 }
 
-}
+} //namespace 

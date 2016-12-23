@@ -19,7 +19,7 @@
 namespace httpfiledownload {
 
 const size_t BUFFERSIZE = 2048; //缓冲区默认大小
-const int THREADMAXNUMS = 1;    //多线程下载时，下载线程数
+const int THREADMAXNUMS = 2;    //多线程下载时，下载线程数
 
 class DownloadTool;
 
@@ -70,6 +70,7 @@ private:
 	void update(size_t begin, size_t end);
 
 public:
+	Sem				m_fileSem;      //
 	/*
 	 * 
 	 */

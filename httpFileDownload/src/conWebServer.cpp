@@ -34,7 +34,6 @@ ConWebServer::ConWebServer(const AnalysisURL& an) {
 		LogError("connect failed");
 		exit(0);
     }
-	LogDebug("connect success ...\n");
 }
 
 
